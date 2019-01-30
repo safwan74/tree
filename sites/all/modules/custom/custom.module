@@ -1,0 +1,110 @@
+<?php
+
+/* 
+ * To change this license header, choose License Headers in Project Properties.
+ * To change this template file, choose Tools | Templates
+ * and open the template in the editor.
+ */
+
+/**
+ * Implements hook_menu().
+ */
+function custom_menu() {
+  $items = array();
+
+  $items['cal'] = array( //this creates a URL that will call this form at "examples/form-example"
+    'title' => 'Mortgage Calculator Form', //page title
+    'description' => 'A form to mess around with.',
+    'page callback' => 'drupal_get_form', //this is the function that will be called when the page is accessed.  for a form, use drupal_get_form
+    'page arguments' => array('custom_cal_form'), //put the name of the form here
+    'access callback' => TRUE
+  );
+
+  return $items;
+}
+
+function custom_cal_form($form, &$form_state) {
+  $form['interest_rate'] = array(
+      '#title'=>t('Interest Rate %'),
+      '#type'=>'textfield',
+       '#attributes' => array(
+        ' type' => 'number',     
+    ),
+      '#maxlength' => 2,  
+      '#required' => true,
+  );
+    $form['money_borrowed'] = array(
+      '#title'=>t('How much the total amount borrowed in ££'),
+      '#type'=>'textfield',
+       '#attributes' => array(
+        ' type' => 'number',     
+    ),
+      '#maxlength' => 6,  
+      '#required' => true,
+  );
+  
+  for($i = 0; $i <= 25; $i++){
+      
+      $years[] = $i;
+      
+      
+    
+  }
+    $form['years'] = array(
+    '#type' => 'select',
+    '#title' => t('How many years'),
+    '#description' => t('Please select how many years you want the mortgage for'),
+    '#options' => $years,
+    '#default_value' => $years[2],
+
+  );
+    
+        $form['repayment'] = array(
+      '#title'=>t('how much you pay monthly ££'),
+      '#type'=>'textfield',
+       '#attributes' => array(
+        ' type' => 'number',     
+    ),
+      '#maxlength' => 6,  
+      '#required' => true,
+  );
+  $form['submit_button'] = array(
+    '#type' => 'submit',
+    '#value' => t('Click Here!'),
+  );
+  
+  return $form;
+}
+
+    function custom_cal_form_submit($form, &$form_state){
+        $interest_rate = $form_state['values']['interest_rate'];
+        $money_borrowed = $form_state['values']['money_borrowed'];
+        $years = $form_state['values']['years'];
+        $repayment = $form_state['values']['repayment'];
+        
+        $total_repayment = custom_calculateRepayment($repayment, $interest_rate, $money_borrowed, $years);
+        $interest_per_year = custom_calculateInterest($interest_rate, $money_borrowed);
+        $interest_paid = custom_calculate_total_years_interest($years, $interest_per_year);
+        $balance = custom_calculate_remaining_balance($total_repayment, $money_borrowed);
+        drupal_set_message("$interest_rate, $money_borrowed, $years, $repayment, $total_repayment, $interest_per_year,"
+                . "$interest_paid, $balance");
+        
+    }
+    function custom_calculate_remaining_balance($total_repayment, $money_borrowed){
+        return  $money_borrowed - $total_repayment;
+    }
+    function custom_calculate_total_years_interest($years, $interest_per_year){
+        return $interest_per_year * $years;
+    }
+    function custom_calculateRepayment($repayment, $interestRate, $moneyBorrowed, $years){
+        
+        
+        $interest = custom_calculateInterest($interestRate, $moneyBorrowed);
+        return ($repayment * 12 * $years) - ($interest * $years) ;
+        
+    }
+    
+    function custom_calculateInterest($interestRate, $moneyBorrowed){
+        $interest = $moneyBorrowed * $interestRate /100;
+        return $interest;
+    }
